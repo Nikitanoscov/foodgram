@@ -1,0 +1,1 @@
+[{"model": "recipes.tags", "pk": 2, "fields": {"name": "Быстрое", "slug": "bistroe"}}, {"model": "recipes.tags", "pk": 1, "fields": {"name": "Завтрак", "slug": "zavtrak"}}, {"model": "recipes.tags", "pk": 3, "fields": {"name": "простое", "slug": "prostoe"}}, {"model": "recipes.tags", "pk": 4, "fields": {"name": "сложное", "slug": "slojnoe"}}]
