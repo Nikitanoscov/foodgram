@@ -1,13 +1,12 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from recipes.views import (
-    TagsViewSet,
-    RecipeViewSet,
+from api.views import (
     IngredientsViewSet,
-    short_link
+    RecipeViewSet,
+    TagsViewSet
 )
-from users.views import UserViewSet
+from api.views import UserViewSet
 
 router = DefaultRouter()
 
@@ -29,14 +28,7 @@ router.register(
 )
 
 
-
 urlpatterns = [
-    path('s/<str:link>', short_link),
-    # path(
-    #     'users/me/avatar/',
-    #     UserAvatarApi.as_view(),
-    #     name='update_avatar'
-    # ),
     path('auth/', include('djoser.urls.authtoken')),
     path('', include(router.urls))
 ]

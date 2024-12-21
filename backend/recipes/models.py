@@ -1,9 +1,10 @@
 from datetime import datetime
+import uuid
 
-import short_url
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from backend.settings import SITE_URL
 from users.models import CustomUsers
 
 
@@ -13,7 +14,7 @@ class Ingredients(models.Model):
         max_length=50,
         unique=True
     )
-    unit_of_measurement = models.CharField(
+    measurement_unit = models.CharField(
         max_length=10
     )
 
@@ -46,12 +47,11 @@ class Recipes(models.Model):
         CustomUsers,
         on_delete=models.CASCADE,
         related_name='recipes',
+        null=False
     )
     name = models.TextField(
-        unique=True,
         max_length=256,
-        verbose_name='Название',
-        blank=True
+        verbose_name='Название'
     )
     image = models.ImageField(
         upload_to='recipes_media/',
@@ -64,7 +64,7 @@ class Recipes(models.Model):
     ingredients = models.ManyToManyField(
         Ingredients,
         through='RecipesIngredients',
-        blank=True
+        blank=True,
     )
     tags = models.ManyToManyField(
         Tags,
@@ -73,24 +73,34 @@ class Recipes(models.Model):
     )
     cooking_time = models.IntegerField(
         help_text='Введите время в минутах',
-        validators=[MinValueValidator(1)],
-        blank=True
+        validators=[MinValueValidator(1)]
     )
     pub_date = models.DateTimeField(
-        default=datetime.now()
+        default=datetime.now
     )
     short_link = models.TextField(
         blank=True
     )
 
+    def save(self, *args, **kwargs):
+        self.short_link = self.generate_short_link()
+        return super().save(*args, **kwargs)
+
+    def generate_short_link(self):
+        short_link = uuid.uuid4().hex[:5]
+        return f"s/{short_link}"
+
+    def get_full_short_link(self, request=None):
+        if request:
+            domain = request.get_host()
+        else:
+            domain = SITE_URL
+        return f"https://{domain}recipes/{self.short_link}"
+
     class Meta:
         ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-
-    def save(self, *args, **kwargs):
-        self.short_link = short_url.encode_url(self.id)
-        return super().save(self, *args, **kwargs)
 
     def __str__(self):
         return (
@@ -112,8 +122,8 @@ class RecipesIngredients(models.Model):
         on_delete=models.CASCADE,
         related_name='recipe'
     )
-    amount = models.FloatField(
-        validators=[MinValueValidator(1.0)]
+    amount = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)]
     )
 
     def __str__(self):
@@ -121,6 +131,7 @@ class RecipesIngredients(models.Model):
 
 
 class RecipesTags(models.Model):
+    """Модель для связи рецептов и тегов."""
     recipe = models.ForeignKey(
         Recipes,
         related_name='tag',
@@ -133,7 +144,7 @@ class RecipesTags(models.Model):
     )
 
     def __str__(self):
-        return f'{self.recipe.name} - {self.tags.name}'
+        return f'{self.recipe.name} - {self.tag.name}'
 
 
 class Favourites(models.Model):
@@ -158,7 +169,7 @@ class ShoppingCard(models.Model):
         related_name='shopping_recipe'
     )
     recipe = models.ForeignKey(
-        CustomUsers,
+        Recipes,
         on_delete=models.CASCADE,
         related_name='user_is_shopping'
     )

@@ -28,7 +28,7 @@ class Command(BaseCommand):
                     try:
                         Ingredients.objects.create(
                             name=row[0],
-                            unit_of_measurement=row[1],
+                            measurement_unit=row[1],
                         )
                         count += 1
                     except Exception as e:

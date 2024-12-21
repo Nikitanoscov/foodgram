@@ -3,10 +3,16 @@ from django.contrib import admin
 from django.urls import include, path
 
 from . import settings
+from api.views import RecipeViewSet
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
+    path(
+        'recipes/s/<str:link>/', RecipeViewSet.as_view(
+            {'get': 'short_link_redirect'}
+        )
+    ),
 ]
 
 if settings.DEBUG:

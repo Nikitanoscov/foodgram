@@ -1,4 +1,3 @@
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.validators import RegexValidator
 from django.db import models
@@ -38,7 +37,7 @@ class CustomUsers(AbstractUser):
 
     USERNAME_FIELD = 'email'
 
-    REQUIRED_FIELDS = ['username']    
+    REQUIRED_FIELDS = ['username']
 
     username = models.TextField(
         max_length=150,
@@ -57,7 +56,7 @@ class CustomUsers(AbstractUser):
     )
     avatar = models.ImageField(
         upload_to='users_media/',
-        default='backend/media/users_media/default_user_avatar.jpg'
+        null=True
     )
     role = models.CharField(
         verbose_name='Роль',
@@ -80,10 +79,10 @@ class Subscribers(models.Model):
     author = models.ForeignKey(
         CustomUsers,
         on_delete=models.CASCADE,
-        related_name='subscriber'
+        related_name='subscribers'
     )
     subscriber = models.ForeignKey(
         CustomUsers,
         on_delete=models.CASCADE,
-        related_name='author'
+        related_name='authors'
     )

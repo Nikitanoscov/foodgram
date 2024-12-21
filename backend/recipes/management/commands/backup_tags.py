@@ -1,4 +1,3 @@
-import json
 from django.core.management.base import BaseCommand
 from recipes.models import Tags
 from django.core.serializers import serialize
