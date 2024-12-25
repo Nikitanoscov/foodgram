@@ -310,7 +310,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             Recipes,
             short_link=full_link
         )
-        print(recipe)
         return redirect('recipes-detail', pk=recipe.id)
 
     @action(

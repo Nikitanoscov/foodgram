@@ -47,7 +47,8 @@ class Recipes(models.Model):
         CustomUsers,
         on_delete=models.CASCADE,
         related_name='recipes',
-        null=False
+        null=False,
+        verbose_name='Автор'
     )
     name = models.TextField(
         max_length=256,
@@ -56,32 +57,37 @@ class Recipes(models.Model):
     image = models.ImageField(
         upload_to='recipes_media/',
         blank=True,
-        null=False
+        null=False,
+        verbose_name='Изображение'
     )
     text = models.TextField(
         max_length=200,
         blank=True,
-        null=False
+        null=False,
+        verbose_name='Описание'
     )
     ingredients = models.ManyToManyField(
         Ingredients,
         through='RecipesIngredients',
-        null=False
+        verbose_name='Ингредиенты'
     )
     tags = models.ManyToManyField(
         Tags,
         through='RecipesTags',
-        null=False
+        verbose_name='Теги'
     )
     cooking_time = models.IntegerField(
         help_text='Введите время в минутах',
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(1)],
+        verbose_name='Время приготовления'
     )
     pub_date = models.DateTimeField(
-        default=datetime.now
+        default=datetime.now,
+        verbose_name='Дата публикации'
     )
     short_link = models.TextField(
-        blank=True
+        blank=True,
+        verbose_name='Короткая ссылка'
     )
 
     def save(self, *args, **kwargs):
@@ -121,7 +127,9 @@ class RecipesIngredients(models.Model):
         related_name='recipe'
     )
     amount = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(1)],
+        null=False,
+        blank=True
     )
 
     def __str__(self):

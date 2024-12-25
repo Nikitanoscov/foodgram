@@ -10,13 +10,17 @@ class TextShoppingCartRenders(BaseRenderer):
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         text_buffer = io.StringIO()
+        result = {}
         for recipes_data in data:
-            text_buffer.write(recipes_data.get('recipe_name') + '\n')
-            text_buffer.write(
-                '\n'.join(
-                    f"{ingredient.get('name')} - {ingredient.get('amount')}"
-                    for ingredient in recipes_data.get('ingredients')
-                )
+            for key, value in recipes_data.items():
+                if key in result.keys():
+                    result[key] += value
+                else:
+                    result[key] = value
+        text_buffer.write(
+            '\n'.join(
+                f"{key} - {value}"
+                for key, value in result.items()
             )
-            text_buffer.write('\n\n\n')
+        )
         return text_buffer.getvalue()

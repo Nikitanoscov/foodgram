@@ -625,12 +625,7 @@ class ShoppingCardSerializer(serializers.ModelSerializer):
             ingredients = RecipesIngredients.objects.filter(
                 recipe=recipe
             )
-            data['recipe_name'] = recipe.name
-            data['ingredients'] = []
             for ingredient in ingredients:
-                data_ingredient = {}
-                data_ingredient['name'] = ingredient.ingredient.name
-                data_ingredient['amount'] = ingredient.amount
-                data['ingredients'].append(data_ingredient)
+                data[ingredient.ingredient.name] = ingredient.amount
             return data
         return super().to_representation(instance)
