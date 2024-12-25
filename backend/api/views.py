@@ -13,7 +13,7 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 
-from api.filters import RecipeFilter
+from api.filters import RecipeFilter, IngredientFilter
 from api.mixins import DisableHttpMethodsMixin
 from api.paginations import CustomPageNumberPagination
 from api.permissions import OnlyAuthorOrReadOnly
@@ -213,9 +213,8 @@ class IngredientsViewSet(DisableHttpMethodsMixin, viewsets.ModelViewSet):
     queryset = Ingredients.objects.all()
     serializer_class = IngredientGetSerializer
     permission_classes = (AllowAny,)
-    filter_backends = (DjangoFilterBackend, )
+    filterset_class = IngredientFilter
     filterset_fields = ('name',)
-    pagination_class = None
 
     def update(self, request, *args, **kwargs):
         """PUT method"""
@@ -311,6 +310,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             Recipes,
             short_link=full_link
         )
+        print(recipe)
         return redirect('recipes-detail', pk=recipe.id)
 
     @action(

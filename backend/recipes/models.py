@@ -21,7 +21,7 @@ class Ingredients(models.Model):
     class Meta:
         ordering = ('name',)
         verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Игредиенты'
+        verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
         return self.name
@@ -55,21 +55,23 @@ class Recipes(models.Model):
     )
     image = models.ImageField(
         upload_to='recipes_media/',
-        blank=True
+        blank=True,
+        null=False
     )
     text = models.TextField(
         max_length=200,
-        blank=True
+        blank=True,
+        null=False
     )
     ingredients = models.ManyToManyField(
         Ingredients,
         through='RecipesIngredients',
-        blank=True,
+        null=False
     )
     tags = models.ManyToManyField(
         Tags,
         through='RecipesTags',
-        blank=True
+        null=False
     )
     cooking_time = models.IntegerField(
         help_text='Введите время в минутах',
@@ -103,11 +105,7 @@ class Recipes(models.Model):
         verbose_name_plural = 'Рецепты'
 
     def __str__(self):
-        return (
-            f'Рецепт {self.name},'
-            f'из {self.ingredients},'
-            f'под тегами {self.tags}'
-        )
+        return self.name
 
 
 class RecipesIngredients(models.Model):
@@ -160,6 +158,11 @@ class Favourites(models.Model):
         related_name='user'
     )
 
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные'
+        unique_together = ('user', 'recipe')
+
 
 class ShoppingCard(models.Model):
     """Модель для списка продуктов."""
@@ -173,3 +176,8 @@ class ShoppingCard(models.Model):
         on_delete=models.CASCADE,
         related_name='user_is_shopping'
     )
+
+    class Meta:
+        verbose_name = 'Корзина покупок'
+        verbose_name_plural = 'Корзина покупок'
+        unique_together = ('user', 'recipe')

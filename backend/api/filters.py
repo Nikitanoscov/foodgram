@@ -1,7 +1,19 @@
 from django.db.models import Exists, OuterRef
 from django_filters import rest_framework as filters
 
-from recipes.models import Favourites, Recipes, ShoppingCard
+from recipes.models import Favourites, Recipes, ShoppingCard, Ingredients
+
+
+class IngredientFilter(filters.FilterSet):
+    """Фильтр для получения ингредиентов по названию."""
+    name = filters.CharFilter(
+        field_name='name',
+        lookup_expr='icontains'
+    )
+
+    class Meta:
+        model = Ingredients
+        fields = ('name',)
 
 
 class RecipeFilter(filters.FilterSet):
