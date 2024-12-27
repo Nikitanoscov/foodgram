@@ -1,17 +1,14 @@
-from django.contrib import admin, messages
-from django.core.exceptions import ValidationError
+from django.contrib import admin
 from django.utils.safestring import mark_safe
 
 from .models import (
+    Ingredients,
     Recipes,
     RecipesIngredients,
     RecipesTags,
-    Ingredients,
-    Tags,
-    Favourites,
-    ShoppingCard
+    Tags
 )
-from .forms import RecipeIngredientsInLineFormSet, RecipeTagsInLineformSet
+from .forms import RecipeIngredientsInLineFormSet, RecipeTagsInLineFormSet
 
 
 @admin.register(Ingredients)
@@ -33,7 +30,7 @@ class RecipesIngredientsInline(admin.TabularInline):
 class RecipesTagsInline(admin.TabularInline):
     model = RecipesTags
     extra = 1
-    formset = RecipeTagsInLineformSet
+    formset = RecipeTagsInLineFormSet
 
 
 @admin.register(Recipes)

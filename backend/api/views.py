@@ -2,7 +2,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 import djoser.views
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from rest_framework.permissions import (

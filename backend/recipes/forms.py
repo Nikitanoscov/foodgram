@@ -1,7 +1,5 @@
 from django import forms
 
-from .models import RecipesIngredients, RecipesTags
-
 
 class RecipeIngredientsInLineFormSet(forms.BaseInlineFormSet):
 
@@ -21,7 +19,7 @@ class RecipeIngredientsInLineFormSet(forms.BaseInlineFormSet):
         return super().clean()
 
 
-class RecipeTagsInLineformSet(forms.BaseInlineFormSet):
+class RecipeTagsInLineFormSet(forms.BaseInlineFormSet):
 
     def clean(self):
         tags = []
