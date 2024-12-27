@@ -56,8 +56,6 @@ class Recipes(models.Model):
     )
     image = models.ImageField(
         upload_to='recipes_media/',
-        blank=True,
-        null=False,
         verbose_name='Изображение'
     )
     text = models.TextField(
@@ -103,7 +101,7 @@ class Recipes(models.Model):
             domain = request.get_host()
         else:
             domain = SITE_URL
-        return f"https://{domain}recipes/{self.short_link}"
+        return f"http://{domain}{self.short_link}"
 
     class Meta:
         ordering = ('-pub_date',)

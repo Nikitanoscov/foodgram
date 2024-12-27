@@ -2,7 +2,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 import djoser.views
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from rest_framework.permissions import (
@@ -195,18 +195,6 @@ class TagsViewSet(DisableHttpMethodsMixin, viewsets.ModelViewSet):
     serializer_class = TagsSerializer
     pagination_class = None
 
-    def update(self, request, *args, **kwargs):
-        """PUT method"""
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def create(self, *args, **kwargs):
-        """POST method"""
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def destroy(self, *args, **kwargs):
-        """DELETE method"""
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
 class IngredientsViewSet(DisableHttpMethodsMixin, viewsets.ModelViewSet):
     """Viewset для запросов к ингредиентам."""
@@ -214,19 +202,7 @@ class IngredientsViewSet(DisableHttpMethodsMixin, viewsets.ModelViewSet):
     serializer_class = IngredientGetSerializer
     permission_classes = (AllowAny,)
     filterset_class = IngredientFilter
-    filterset_fields = ('name',)
-
-    def update(self, request, *args, **kwargs):
-        """PUT method"""
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def create(self, *args, **kwargs):
-        """POST method"""
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def destroy(self, *args, **kwargs):
-        """DELETE method"""
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -244,8 +220,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return self.filter_queryset(queryset)
         return queryset
 
-    def get_permissions(self):
-        return super().get_permissions()
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if self.action == 'retrieve':
+            context['request'] = self.request
+        return context
 
     def create(self, request, *args, **kwargs):
         request.data['author'] = request.user.id
@@ -300,8 +279,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         methods=('get',),
-        detail=False,
-        url_path='redirect/(?P<code>[^/.]+)'
+        detail=False
     )
     def short_link_redirect(self, request, link):
         """Редирект по короткой ссылке на рецепт."""

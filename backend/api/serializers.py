@@ -77,10 +77,11 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
+        user = self.context.get('request').user
+        if not user.is_anonymous:
             return Subscribers.objects.filter(
-                subscriber=request.user, author=obj
+                author=obj,
+                subscriber=self.context.get('request').user
             ).exists()
         return False
 
@@ -214,7 +215,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         required=True
     )
     image = Base64ImageField(
-        required=True
+        required=False
     )
     is_in_shopping_cart = serializers.SerializerMethodField(
         method_name='get_is_in_shopping_cart'
@@ -243,7 +244,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
-        required_fields = ['name', 'image', 'cooking_time']
+        required_fields = ['name', 'cooking_time']
         missing_fields = [
             field for field in required_fields
             if field not in attrs or attrs[field] is None
@@ -251,11 +252,19 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = attrs.get('ingredients', '')
         tags = attrs.get('tags', '')
         text = attrs.get('text', '')
-        ingr_ids = [ingredients['id'] for ingredients in ingredients]
-        if missing_fields:
-            raise serializers.ValidationError(
-                {field: f"{field} is required." for field in missing_fields}
-            )
+        image = attrs.get('image', '')
+        if self.context.get('request').method != 'PATCH':
+            if not image:
+                raise serializers.ValidationError(
+                    'Изображение обЪязательное.'
+                )
+            if missing_fields:
+                raise serializers.ValidationError(
+                    {
+                        field: f"{field} is required."
+                        for field in missing_fields
+                    }
+                )
         if not text:
             raise serializers.ValidationError(
                 'text: text is required.'
@@ -271,17 +280,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         if not ingredients:
             raise serializers.ValidationError(
                 'ingredients: ingredients is required.'
-            )
-        if len(ingr_ids) > len(set(ingr_ids)):
-            raise serializers.ValidationError(
-                'ingredients: ingredients must be unique'
-            )
-        ingrs = Ingredients.objects.filter(
-            id__in=ingr_ids
-        )
-        if len(ingrs) < len(ingr_ids):
-            raise serializers.ValidationError(
-                'ingredients: ingredient not found'
             )
         return attrs
 
@@ -329,17 +327,42 @@ class RecipeSerializer(serializers.ModelSerializer):
                 tags_lst.append(current_tag)
             instance.tags.set(tags_lst)
         if 'ingredients' in validated_data:
-            ingredients = validated_data.pop('ingredients')
+            ingredients = validated_data.get('ingredients')
+            existing_ingredients = {
+                ingr.id: ingr.ingredient.name
+                for ingr in RecipesIngredients.objects.filter(
+                    recipe=instance
+                )
+            }
+            print(ingredients)
             for ingredient in ingredients:
-                current_ingredients = get_object_or_404(
+                print(ingredient)
+                current_ingredient = get_object_or_404(
                     Ingredients,
                     id=ingredient['id']
                 )
-                RecipesIngredients.objects.update_or_create(
-                    recipe=instance,
-                    ingredient=current_ingredients,
-                    defaults={'amount': ingredient['amount']}
-                )
+                if not RecipesIngredients.objects.filter(
+                        recipe=instance,
+                        id=ingredient['id']
+                ).exists():
+                    RecipesIngredients.objects.create(
+                        recipe=instance,
+                        ingredient=current_ingredient,
+                        amount=ingredient['amount']
+                    )
+                else:
+                    if ingredient['id'] in existing_ingredients.keys():
+                        existing_ingredients.pop(ingredient['id'])
+                    else:
+                        RecipesIngredients.objects.create(
+                            recipe=instance,
+                            ingredient=current_ingredient,
+                            amount=ingredient['amount']
+                        )
+            RecipesIngredients.objects.filter(
+                recipe=instance,
+                id__in=existing_ingredients.keys()
+            ).delete()
         instance.save()
         return instance
 
@@ -355,7 +378,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             id=representation['author']
         )
         representation['author'] = UserSerializer(
-            author
+            author, context={'request': self.context.get('request')}
         ).data
         representation['ingredients'] = IngredientForRecipesSerializer(
             ingredients,
@@ -377,19 +400,21 @@ class RecipeSerializer(serializers.ModelSerializer):
         return None
 
     def get_is_in_shopping_cart(self, obj):
-        if ShoppingCard.objects.filter(
-            user=obj.author,
-            recipe=obj.id
-        ).exists():
-            return True
+        user = self.context.get('request').user
+        if not user.is_anonymous:
+            return ShoppingCard.objects.filter(
+                user=self.context.get('request').user,
+                recipe=obj.id
+            ).exists()
         return False
 
     def get_is_favorited(self, obj):
-        if Favourites.objects.filter(
-            user=obj.author,
-            recipe=obj.id
-        ).exists():
-            return True
+        user = self.context.get('request').user
+        if not user.is_anonymous:
+            return Favourites.objects.filter(
+                user=self.context.get('request').user,
+                recipe=obj.id
+            ).exists()
         return False
 
 

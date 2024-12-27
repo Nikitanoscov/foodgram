@@ -41,6 +41,11 @@ class RecipeFilter(filters.FilterSet):
             'is_in_shopping_cart'
         )
 
+    def filter_tags(self, queryset, name, value):
+        if value:
+            return queryset.filter(tags__slug__in=value).distinct()
+        return queryset
+
     def filter_is_favorited(self, queryset, name, value):
         user = self.request.user
         if user.is_anonymous:
