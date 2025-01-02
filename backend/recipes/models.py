@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 
 from backend.settings import SITE_URL
@@ -11,11 +11,11 @@ from users.models import CustomUsers
 class Ingredients(models.Model):
     """Модель ингредиентов."""
     name = models.TextField(
-        max_length=50,
+        max_length=128,
         unique=True
     )
     measurement_unit = models.CharField(
-        max_length=10
+        max_length=64
     )
 
     class Meta:
@@ -30,7 +30,16 @@ class Ingredients(models.Model):
 class Tags(models.Model):
     """Модель тегов."""
     name = models.CharField(max_length=32, unique=True)
-    slug = models.SlugField(max_length=32, unique=True)
+    slug = models.SlugField(
+        max_length=32,
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex=r'^[\w.@+-]+$',
+                message='Введите корректное имя.'
+            )
+        ]
+    )
 
     class Meta:
         ordering = ('name',)
@@ -59,22 +68,21 @@ class Recipes(models.Model):
         verbose_name='Изображение'
     )
     text = models.TextField(
-        max_length=200,
-        blank=True,
-        null=False,
         verbose_name='Описание'
     )
     ingredients = models.ManyToManyField(
         Ingredients,
         through='RecipesIngredients',
-        verbose_name='Ингредиенты'
+        verbose_name='Ингредиенты',
+        blank=True
     )
     tags = models.ManyToManyField(
         Tags,
         through='RecipesTags',
-        verbose_name='Теги'
+        verbose_name='Теги',
+        blank=True
     )
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveIntegerField(
         help_text='Введите время в минутах',
         validators=[MinValueValidator(1)],
         verbose_name='Время приготовления'
@@ -117,18 +125,25 @@ class RecipesIngredients(models.Model):
     recipe = models.ForeignKey(
         Recipes,
         on_delete=models.CASCADE,
-        related_name='ingredient'
+        related_name='ingredient',
+        verbose_name='Рецепт'
     )
     ingredient = models.ForeignKey(
         Ingredients,
         on_delete=models.CASCADE,
-        related_name='recipe'
+        related_name='recipe',
+        verbose_name='Ингредиент'
     )
     amount = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
-        null=False,
-        blank=True
+        verbose_name='Количество'
     )
+
+    class Meta:
+        unique_together = (
+            'recipe',
+            'ingredient'
+        )
 
     def __str__(self):
         return f'{self.recipe.name} - {self.ingredient.name}'
@@ -139,13 +154,21 @@ class RecipesTags(models.Model):
     recipe = models.ForeignKey(
         Recipes,
         related_name='tag',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт'
     )
     tag = models.ForeignKey(
         Tags,
         related_name='recipe_for_tag',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Таг'
     )
+
+    class Meta:
+        unique_together = (
+            'recipe',
+            'tag'
+        )
 
     def __str__(self):
         return f'{self.recipe.name} - {self.tag.name}'
@@ -156,12 +179,14 @@ class Favourites(models.Model):
     user = models.ForeignKey(
         CustomUsers,
         on_delete=models.CASCADE,
-        related_name='favorite_recipe'
+        related_name='favorite_recipe',
+        verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
         Recipes,
         on_delete=models.CASCADE,
-        related_name='user'
+        related_name='user',
+        verbose_name='Рецепт'
     )
 
     class Meta:
@@ -169,21 +194,29 @@ class Favourites(models.Model):
         verbose_name_plural = 'Избранные'
         unique_together = ('user', 'recipe')
 
+    def __str__(self):
+        return f"{self.user.username} - {self.recipe.name}"
+
 
 class ShoppingCard(models.Model):
     """Модель для списка продуктов."""
     user = models.ForeignKey(
         CustomUsers,
         on_delete=models.CASCADE,
-        related_name='shopping_recipe'
+        related_name='shopping_recipe',
+        verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
         Recipes,
         on_delete=models.CASCADE,
-        related_name='user_is_shopping'
+        related_name='user_is_shopping',
+        verbose_name='Рецепт'
     )
 
     class Meta:
         verbose_name = 'Корзина покупок'
         verbose_name_plural = 'Корзина покупок'
         unique_together = ('user', 'recipe')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.recipe.name}"

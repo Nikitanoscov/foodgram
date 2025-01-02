@@ -1,5 +1,6 @@
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
@@ -9,31 +10,8 @@ username_validator = RegexValidator(
 )
 
 
-class UsersManager(BaseUserManager):
-    def create_user(self, username, email, password=None, **extra_fields):
-        if not email:
-            raise ValueError('The Email field must be set')
-        email = self.normalize_email(email)
-        user = self.model(username=username, email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, username, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('role', 'admin')
-
-        return self.create_user(username, email, password, **extra_fields)
-
-
 class CustomUsers(AbstractUser):
     """Кастомная модель User."""
-
-    ROLES = (
-        ('user', 'Пользователь'),
-        ('admin', 'Админ')
-    )
 
     USERNAME_FIELD = 'email'
 
@@ -42,36 +20,35 @@ class CustomUsers(AbstractUser):
     username = models.TextField(
         max_length=150,
         validators=[username_validator],
-        unique=True
+        unique=True,
+        verbose_name='Пользовательское имя'
     )
     first_name = models.TextField(
-        max_length=150
+        max_length=150,
+        verbose_name='Имя'
     )
     last_name = models.TextField(
-        max_length=150
+        max_length=150,
+        verbose_name='Фамилия'
     )
     email = models.EmailField(
         max_length=254,
-        unique=True
+        unique=True,
+        verbose_name='Почта'
     )
     avatar = models.ImageField(
         upload_to='users_media/',
-        null=True
+        null=True,
+        verbose_name='Аватар'
     )
-    role = models.CharField(
-        verbose_name='Роль',
-        choices=ROLES,
-        max_length=20,
-        default='user'
-    )
-    confirmation_code = models.CharField(max_length=100)
-
-    objects = UsersManager()
 
     class Meta:
         ordering = ('username',)
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+
+    def __str__(self):
+        return self.username
 
 
 class Subscribers(models.Model):
@@ -79,10 +56,33 @@ class Subscribers(models.Model):
     author = models.ForeignKey(
         CustomUsers,
         on_delete=models.CASCADE,
-        related_name='subscribers'
+        related_name='subscribers',
+        verbose_name='Автор'
     )
     subscriber = models.ForeignKey(
         CustomUsers,
         on_delete=models.CASCADE,
-        related_name='authors'
+        related_name='authors',
+        verbose_name='Подписчик'
     )
+
+    class Meta:
+        verbose_name = 'Подписки'
+        verbose_name_plural = 'Подписки'
+        unique_together = (
+            'author',
+            'subscriber'
+        )
+
+    def clean(self):
+        if self.author == self.subscriber:
+            raise ValidationError(
+                ('Пользователь не может подписаться сам на себя.')
+            )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.author} - {self.subscriber}"

@@ -2,10 +2,12 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe
 
 from .models import (
+    Favourites,
     Ingredients,
     Recipes,
     RecipesIngredients,
     RecipesTags,
+    ShoppingCard,
     Tags
 )
 from .forms import RecipeIngredientsInLineFormSet, RecipeTagsInLineFormSet
@@ -23,8 +25,8 @@ class IngredientAdmin(admin.ModelAdmin):
 class RecipesIngredientsInline(admin.TabularInline):
     model = RecipesIngredients
     extra = 1
-    formset = RecipeIngredientsInLineFormSet
     autocomplete_fields = ['ingredient']
+    formset = RecipeIngredientsInLineFormSet
 
 
 class RecipesTagsInline(admin.TabularInline):
@@ -42,7 +44,7 @@ class RecipeAdmin(admin.ModelAdmin):
         'get_ingredients',
         'get_tags',
         'text',
-        'image'
+        'image_tag'
     )
     fields = (
         'author',
@@ -71,9 +73,11 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description='Изображение')
     def image_tag(self, obj):
-        return mark_safe(
-            f'<img src={obj.image.url} width="80" height="60">'
-        )
+        if obj.image:
+            return mark_safe(
+                f'<img src={obj.image.url} width="80" height="60">'
+            )
+        return 'Изображения нет.'
 
     @admin.display(description='Автор')
     def get_author_username(self, obj):
@@ -83,3 +87,23 @@ class RecipeAdmin(admin.ModelAdmin):
 @admin.register(Tags)
 class TagAdmin(admin.ModelAdmin):
     search_fields = ('slug',)
+
+
+@admin.register(Favourites)
+class FavouriteAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'recipe'
+    )
+    list_filter = ('user',)
+    search_fields = ('user',)
+
+
+@admin.register(ShoppingCard)
+class ShoppingCardAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'recipe'
+    )
+    list_filter = ('user',)
+    search_fields = ('user',)

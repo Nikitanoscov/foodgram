@@ -3,15 +3,15 @@ from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 import djoser.views
 from rest_framework import viewsets, status
-from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticatedOrReadOnly,
     IsAuthenticated
 )
-from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.response import Response
 
 from api.filters import RecipeFilter, IngredientFilter
 from api.mixins import DisableHttpMethodsMixin
@@ -40,10 +40,10 @@ class UserViewSet(djoser.views.UserViewSet):
     permission_class = (AllowAny,)
     pagination_class = LimitOffsetPagination
 
-    def get_queryset(self):
-        if self.action == 'list':
-            return CustomUsers.objects.all()
-        return super().get_queryset()
+    # def get_queryset(self):
+    #     if self.action == 'list':
+    #         return CustomUsers.objects.all()
+    #     return super().get_queryset()
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -216,15 +216,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        if self.request.query_params:
-            return self.filter_queryset(queryset)
+        if self.request.query_params.getlist('tags'):
+            return queryset.filter(
+                tags__slug__in=self.request.query_params.getlist('tags')
+            )
         return queryset
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [AllowAny()]
+        return super().get_permissions()
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         if self.action == 'retrieve':
             context['request'] = self.request
         return context
+
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         request.data['author'] = request.user.id
@@ -288,7 +298,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             Recipes,
             short_link=full_link
         )
-        return redirect('recipes-detail', pk=recipe.id)
+        frontend_url = f"http://localhost:3000/recipes/{recipe.id}"
+        return redirect(frontend_url)
 
     @action(
         methods=('get',),

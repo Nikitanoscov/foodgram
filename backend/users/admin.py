@@ -1,26 +1,36 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import Group
 from django.utils.safestring import mark_safe
 
 from .models import CustomUsers, Subscribers
 
 
 @admin.register(CustomUsers)
-class UserAdmin(admin.ModelAdmin):
-
+class CustomUserAdmin(BaseUserAdmin):
     list_display = (
         'avatar_tag',
-        'email',
-        'username'
-    )
-
-    fields = (
-        'avatar',
-        'email',
-        'username'
-    )
-    search_fields = (
         'username',
-        'email'
+        'email',
+        'first_name',
+        'last_name',
+        'is_staff',
+        'is_superuser'
+    )
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    search_fields = ('username', 'email', 'first_name', 'last_name')
+    ordering = ('username',)
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': (
+                'username',
+                'email',
+                'password1',
+                'password2',
+                'is_staff'
+            ),
+        }),
     )
 
     @admin.display(description='Аватар')
@@ -38,3 +48,6 @@ class SubscriberAdmin(admin.ModelAdmin):
         'author',
         'subscriber'
     )
+
+
+admin.site.unregister(Group)

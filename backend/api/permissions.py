@@ -11,25 +11,24 @@ class OnlyAuthorOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        if request.user.role == 'admin':
-            return True
         if request.user.is_superuser:
             return True
         if obj.author == request.user:
             return True
+        return False
 
 
-class IsAdminOrSuperUser(permissions.BasePermission):
-    """
-    Разрешение, позволяющее доступ
-    только администраторам или суперпользователям.
-    """
-    def has_permission(self, request, view):
-        user = request.user
+# class IsAdminOrSuperUser(permissions.BasePermission):
+#     """
+#     Разрешение, позволяющее доступ
+#     только администраторам или суперпользователям.
+#     """
+#     def has_permission(self, request, view):
+#         user = request.user
 
-        if user.is_authenticated:
-            return user and (user.role == 'admin' or user.is_superuser)
+#         if user.is_authenticated:
+#             return user and (user.role == 'admin' or user.is_superuser)
 
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        return user and (user.role == 'admin' or user.is_superuser)
+#     def has_object_permission(self, request, view, obj):
+#         user = request.user
+#         return user and (user.role == 'admin' or user.is_superuser)

@@ -66,6 +66,7 @@ target/
 
 # Virtual environment
 .env
+.env.example
 .venv/
 venv/
 /.env/

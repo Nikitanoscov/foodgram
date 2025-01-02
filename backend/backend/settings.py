@@ -3,18 +3,21 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+dotenv_path = BASE_DIR / '.env'
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+load_dotenv()
+
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-1t07dq9c$y9ci+9c1h2gb2!vh1k2lpb$ev%8=b4l4tnpy-etqp')
 
 SITE_URL = 'localhost:8000/'
 
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+DEBUG = (os.getenv('DEBUG', 'False') == 'True')
+
+
+ALLOWED_HOSTS = os.getenv('HOSTS_PROJECT', '*').split(' ')
 
 
 INSTALLED_APPS = [
@@ -44,11 +47,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:3000',
-# ]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+]
 
-# CORS_URLS_REGEX = r'^/.*$'
+CORS_URLS_REGEX = r'^/.*$'
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -70,12 +73,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
+            'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'foodgram_pasword'),
+            'HOST': os.getenv('HOST', 'foodgram_db'),
+            'PORT': os.getenv('PORT', '5432')
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {

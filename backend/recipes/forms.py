@@ -1,20 +1,22 @@
 from django import forms
+from django.forms import ValidationError
 
 
 class RecipeIngredientsInLineFormSet(forms.BaseInlineFormSet):
-
     def clean(self):
         ingredients = []
-        for data in self.cleaned_data:
-            if data:
-                ingredients.append(data.get('ingredient'))
+        for form in self.forms:
+            if form.is_valid():
+                clean_data = form.cleaned_data
+                print(clean_data)
+                if (
+                    clean_data.get('DELETE', '') is not True
+                    and clean_data.get('ingredient')
+                ):
+                    ingredients.append(clean_data.get('ingredient'))
         if not ingredients:
-            raise forms.ValidationError(
-                'Рецепт должен содержать хотя бы один ингредиент.'
-            )
-        if len(ingredients) > len(set(ingredients)):
-            raise forms.ValidationError(
-                'Ингредиенты должны быть разными.'
+            raise ValidationError(
+                'Рецепт должен содержать хотя бы один ингредиент'
             )
         return super().clean()
 
@@ -23,15 +25,16 @@ class RecipeTagsInLineFormSet(forms.BaseInlineFormSet):
 
     def clean(self):
         tags = []
-        for data in self.cleaned_data:
-            if data:
-                tags.append(data.get('tag'))
+        for form in self.forms:
+            if form.is_valid():
+                clean_data = form.cleaned_data
+                if (
+                    clean_data.get('DELETE', '') is not True
+                    and clean_data.get('tag')
+                ):
+                    tags.append(clean_data.get('tag'))
         if not tags:
             raise forms.ValidationError(
                 'Рецепт должен содержать хотя бы один тег.'
-            )
-        if len(tags) > len(set(tags)):
-            raise forms.ValidationError(
-                'Рецепт не может содержать одинаковые теги.'
             )
         return super().clean()
