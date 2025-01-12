@@ -1,7 +1,7 @@
 from django.db.models import Exists, OuterRef, Q, Case, When, IntegerField
 from django_filters import rest_framework as filters
 
-from recipes.models import Favourites, Ingredients, Recipes, ShoppingCard
+from recipes.models import Favourites, Ingredients, Recipes, ShoppingCard, Tags
 
 
 class IngredientFilter(filters.FilterSet):
@@ -33,6 +33,11 @@ class RecipeFilter(filters.FilterSet):
     """Фильтр для запросов к рецептам."""
     author = filters.NumberFilter(
         field_name='author__id'
+    )
+    tags = filters.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        to_field_name='slug',
+        queryset=Tags.objects.all()
     )
     is_favorited = filters.BooleanFilter(
         method='filter_is_favorited'

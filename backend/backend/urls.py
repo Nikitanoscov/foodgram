@@ -1,16 +1,12 @@
+from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from . import settings
-from api.views import RecipeViewSet
+from recipes.views import recipe_redirect
 
 urlpatterns = [
-    path(
-        's/<str:link>/', RecipeViewSet.as_view(
-            {'get': 'short_link_redirect'}
-        )
-    ),
+    path('s/<str:link>/', recipe_redirect, name='recipe_redirect'),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
 ]

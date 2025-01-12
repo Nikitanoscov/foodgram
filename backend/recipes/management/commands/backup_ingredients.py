@@ -1,6 +1,7 @@
-from django.core.management.base import BaseCommand
-from recipes.models import Ingredients
 from django.core.serializers import serialize
+from django.core.management.base import BaseCommand
+
+from recipes.models import Ingredients
 
 
 class Command(BaseCommand):

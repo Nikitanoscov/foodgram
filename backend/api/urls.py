@@ -12,19 +12,23 @@ router = DefaultRouter()
 
 router.register(
     r'tags',
-    TagsViewSet
+    TagsViewSet,
+    basename='tag'
 )
 router.register(
     r'ingredients',
-    IngredientsViewSet
+    IngredientsViewSet,
+    basename='ingredient'
 )
 router.register(
     r'recipes',
-    RecipeViewSet
+    RecipeViewSet,
+    basename='recipe'
 )
 router.register(
     r'users',
-    UserViewSet
+    UserViewSet,
+    basename='user'
 )
 
 

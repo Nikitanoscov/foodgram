@@ -3,11 +3,11 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from django.utils.safestring import mark_safe
 
-from .models import CustomUsers, Subscribers
+from .models import Users, Subscribers
 
 
-@admin.register(CustomUsers)
-class CustomUserAdmin(BaseUserAdmin):
+@admin.register(Users)
+class UserAdmin(BaseUserAdmin):
     list_display = (
         'avatar_tag',
         'username',
@@ -15,7 +15,9 @@ class CustomUserAdmin(BaseUserAdmin):
         'first_name',
         'last_name',
         'is_staff',
-        'is_superuser'
+        'is_superuser',
+        'count_recipes_tag',
+        'count_subscriptions_tag'
     )
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
     search_fields = ('username', 'email', 'first_name', 'last_name')
@@ -40,6 +42,14 @@ class CustomUserAdmin(BaseUserAdmin):
                 f'<img src={obj.avatar.url} width="80" height="60">'
             )
         return 'Без аватара'
+
+    @admin.display(description='Количество рецептов')
+    def count_recipes_tag(self, obj):
+        return obj.recipes.all().count
+
+    @admin.display(description='Количество подписок на автора')
+    def count_subscriptions_tag(self, obj):
+        return obj.user_subscriptions.all().count()
 
 
 @admin.register(Subscribers)

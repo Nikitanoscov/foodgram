@@ -12,7 +12,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
   backend:
-    build: ../backend
+    image: nik325/foodgram_backend:v1
     env_file:
       - .env.example
     volumes:
@@ -22,13 +22,13 @@ services:
       - db
   frontend:
     container_name: foodgram-front
-    build: ../frontend
+    image: nik325/foodgram_frontend:v1
     command: cp -r /app/build/. /static/
     env_file:
       - .env.example
     volumes:
       - static:/static
-      - ../frontend/:/app/result_build/
+      # - ../frontend/:/app/result_build/
   nginx:
     container_name: foodgram-proxy
     image: nginx:1.25.4-alpine

@@ -14,7 +14,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-1t07dq9c$y9ci+9c1h2gb2!vh1
 SITE_URL = 'localhost:8000/'
 
 
-DEBUG = (os.getenv('DEBUG', 'False') == 'True')
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 
 ALLOWED_HOSTS = os.getenv('HOSTS_PROJECT', '*').split(' ')
@@ -31,15 +31,14 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'users.apps.UsersConfig',
     'rest_framework',
-    'corsheaders',
     'rest_framework.authtoken',
+    'django_filters',
     'djoser',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -47,11 +46,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-]
-
-CORS_URLS_REGEX = r'^/.*$'
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -73,7 +67,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-if DEBUG:
+
+if not os.getenv('USE_POSTGRES', 'False') == 'True':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -128,7 +123,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'users.CustomUsers'
+AUTH_USER_MODEL = 'users.Users'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -152,12 +147,10 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': False,
     'SERIALIZERS':
     {
-        'user_create': 'api.serializers.UsersCreateSerializer',
-        'current_user': 'api.serializers.UserSerializer',
+        'current_user': 'api.serializers.UserSerializer'
     },
     'PERMISSIONS': {
         'user': ['rest_framework.permissions.AllowAny'],
         'user_list': ['rest_framework.permissions.AllowAny'],
-        'user_create': ['rest_framework.permissions.AllowAny'],
     },
 }

@@ -1,4 +1,5 @@
 import csv
+from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -9,10 +10,15 @@ class Command(BaseCommand):
     help = 'Импорт данных из CSV файла'
 
     def add_arguments(self, parser):
+        project_root = Path(__file__).resolve(
+        ).parent.parent.parent.parent.parent
+        data_root = project_root / 'data' / 'ingredients.csv'
         parser.add_argument(
             'csv_file',
             type=str,
-            help='Укажите путь к CSV файлу'
+            nargs='?',
+            default=data_root,
+            help='Укажите путь к CSV файлу. По умолчанию: data/ingredients.csv'
         )
 
     def handle(self, *args, **kwargs):
@@ -22,28 +28,30 @@ class Command(BaseCommand):
             with open(csv_file_path, 'r', encoding='utf-8') as file:
                 self.stdout.write(f'Открываем файл: {csv_file_path}')
                 csv_reader = csv.reader(file)
-
-                count = 0
+                ingredients = []
                 for row in csv_reader:
-                    try:
-                        Ingredients.objects.create(
-                            name=row[0],
-                            measurement_unit=row[1],
-                        )
-                        count += 1
-                    except Exception as e:
-                        self.stderr.write(f"Ошибка при создании записи: {e}")
+                    if len(row) < 2:
+                        continue
+                    ingredients.append(Ingredients(
+                        name=row[0],
+                        measurement_unit=row[1],
+                    ))
+
+                Ingredients.objects.bulk_create(
+                    ingredients,
+                    ignore_conflicts=True
+                )
 
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f'Успешно импортировано {count} записей'
+                        'Данные успешно импортированы.'
                     )
                 )
 
         except FileNotFoundError:
             raise CommandError(
-                f'Файл {csv_file_path} не найден.'
-                ' Убедитесь, что путь указан правильно.'
+                f'Файл {csv_file_path} не найден. '
+                'Убедитесь, что путь указан правильно.'
             )
         except Exception as e:
             raise CommandError(f'Произошла ошибка: {e}')
