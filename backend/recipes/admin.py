@@ -1,7 +1,10 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .forms import RecipeIngredientsInLineFormSet, RecipeTagsInLineFormSet
+
+from .forms import RecipeIngredientsInLineFormSet
 from .models import (
     Favourites,
     Ingredients,
@@ -25,20 +28,14 @@ class RecipesIngredientsInline(admin.TabularInline):
     model = RecipesIngredients
     extra = 1
     min_num = 1
+    validate_min = True
     autocomplete_fields = ('ingredient',)
     formset = RecipeIngredientsInLineFormSet
 
 
-class RecipesTagsInline(admin.TabularInline):
-    model = Recipes.tags.through
-    extra = 1
-    min_num = 1
-    formset = RecipeTagsInLineFormSet
-
-
 @admin.register(Recipes)
 class RecipeAdmin(admin.ModelAdmin):
-    inlines = (RecipesIngredientsInline, RecipesTagsInline)
+    inlines = (RecipesIngredientsInline,)
     list_display = (
         'name',
         'get_author_username',
@@ -53,13 +50,18 @@ class RecipeAdmin(admin.ModelAdmin):
         'name',
         'text',
         'image',
-        'cooking_time'
+        'cooking_time',
+        'tags'
     )
     search_fields = (
         'name',
         'author__username'
     )
     list_filter = ('tags',)
+    filter_horizontal = ('tags',)
+
+    def save_formset(self, request, form, formset, change):
+        return super().save_formset(request, form, formset, change)
 
     @admin.display(description='Ингредиенты')
     def get_ingredients(self, obj):
@@ -81,13 +83,12 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description='Автор')
     def get_author_username(self, obj):
-        return obj.author.username
+        link = reverse('admin:users_users_change', args=[obj.author.id])
+        return format_html('<a href="{}">{}</a>', link, obj.author.username)
 
     @admin.display(description='Количество добавлении в избранное')
     def get_count_favorites(self, obj):
-        return Favourites.objects.filter(
-            recipe=obj
-        ).count()
+        return obj.favourites_set.all().count()
 
 
 @admin.register(Tags)

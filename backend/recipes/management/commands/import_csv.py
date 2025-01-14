@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         project_root = Path(__file__).resolve(
-        ).parent.parent.parent.parent.parent
+        ).parent.parent.parent.parent
         data_root = project_root / 'data' / 'ingredients.csv'
         parser.add_argument(
             'csv_file',
@@ -29,13 +29,14 @@ class Command(BaseCommand):
                 self.stdout.write(f'Открываем файл: {csv_file_path}')
                 csv_reader = csv.reader(file)
                 ingredients = []
-                for row in csv_reader:
-                    if len(row) < 2:
+                for name, unit in csv_reader:
+                    if name and unit:
+                        ingredients.append(Ingredients(
+                            name=name,
+                            measurement_unit=unit,
+                        ))
+                    else:
                         continue
-                    ingredients.append(Ingredients(
-                        name=row[0],
-                        measurement_unit=row[1],
-                    ))
 
                 Ingredients.objects.bulk_create(
                     ingredients,

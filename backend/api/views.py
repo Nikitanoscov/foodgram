@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from django.db.models import Count, F, Sum
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
@@ -61,10 +61,11 @@ class UserViewSet(djoser.views.UserViewSet):
         permission_classes=(IsAuthenticated, OnlyAuthorOrReadOnly)
     )
     def me_avatar(self, request):
-        """Распределитель запросв к аватару пользователя."""
+        """Распределитель запросов к аватару пользователя."""
         serializer = AvatarSerializer(
             data=request.data,
-            instance=request.user
+            instance=request.user,
+            context={'request': self.request}
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -76,7 +77,7 @@ class UserViewSet(djoser.views.UserViewSet):
     @me_avatar.mapping.delete
     def delete_avatar(self, request):
         """Удаление автара."""
-        request.user.avatar = None
+        request.user.avatar.delete()
         request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -105,10 +106,10 @@ class UserViewSet(djoser.views.UserViewSet):
     def get_list_subscriptions(self, request):
         """Список подписок пользователя."""
         queryset = Users.objects.filter(
-            user_subscriptions__subscriber=self.request.user
+            subscriptions_to_author__subscriber=self.request.user
         ).annotate(
             recipes_count=Count('recipes')
-        )
+        ).order_by()
         paginator = self.pagination_class()
         paginate_queryset = paginator.paginate_queryset(
             queryset, request
@@ -127,48 +128,39 @@ class UserViewSet(djoser.views.UserViewSet):
         url_path='subscribe'
     )
     def subscribe(self, request, id):
-        try:
-            request.data['author'] = get_object_or_404(
-                Users,
-                id=id
-            ).id
-            request.data['subscriber'] = request.user.id
-            serializer = SubscriberWriteSerializer(
-                data=request.data,
-                context={'request': self.request}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Http404:
-            return Response(
-                data={'error': 'Такого автора не существует.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        request.data['author'] = get_object_or_404(
+            Users,
+            id=id
+        ).id
+        request.data['subscriber'] = request.user.id
+        serializer = SubscriberWriteSerializer(
+            data=request.data,
+            context={'request': self.request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id):
         """Удаление подписки"""
-        if not Users.objects.filter(
-            id=id
-        ).exists():
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        user = self.request.user
-        if user.user_subscriptions.filter(
-            author=id
-        ).exists():
-            user.user_subscriptions.filter(
-                author=id
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        author = get_object_or_404(
+            Users,
+            pk=id
+        )
+        deleted, _ = author.subscriptions_to_author.filter(
+            subscriber=request.user
+        ).delete()
         return Response(
-            data={'error': 'Такой подписки не существует.'},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_204_NO_CONTENT
+            if deleted
+            else status.HTTP_400_BAD_REQUEST
         )
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
     """Viewset для запросов к тегам."""
+
     queryset = Tags.objects.all()
     serializer_class = TagsSerializer
     pagination_class = None
@@ -176,6 +168,7 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     """Viewset для запросов к ингредиентам."""
+
     queryset = Ingredients.objects.all()
     serializer_class = IngredientGetSerializer
     permission_classes = (AllowAny,)
@@ -184,7 +177,8 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """Viewset для рецептов"""
+    """Viewset для рецептов."""
+
     queryset = Recipes.objects.select_related(
         'author'
     ).prefetch_related('tags', 'ingredients')
@@ -197,12 +191,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        if self.action == 'retrieve':
-            context['request'] = self.request
-        return context
-
     @action(
         methods=('get',),
         detail=True,
@@ -211,23 +199,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def get_short_link(self, request, pk):
         """Получение короткой ссылки на рецепт."""
-        try:
-            print(pk)
-            recipe = get_object_or_404(
-                Recipes,
-                id=pk
-            )
-            short_link_path = reverse(
-                'recipe_redirect', kwargs={'link': recipe.short_link}
-            )
-            full_short_link = request.build_absolute_uri(short_link_path)
-            print(full_short_link)
-            return JsonResponse(
-                {'short-link': full_short_link}, status=status.HTTP_200_OK
-            )
-        except Exception as err:
-            print(err)
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        recipe = get_object_or_404(
+            Recipes,
+            id=pk
+        )
+        short_link_path = reverse(
+            'recipe_redirect', kwargs={'link': recipe.short_link}
+        )
+        full_short_link = request.build_absolute_uri(short_link_path)
+        return JsonResponse(
+            {'short-link': full_short_link}, status=status.HTTP_200_OK
+        )
 
     @staticmethod
     def render_shopping_cart(ingredients):
@@ -236,8 +218,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             name = ingredient['name']
             unit = ingredient['measurement_unit']
             amount = ingredient['total_amount']
-            lines.append(f"- {name} ({amount} {unit})")
-        return "\n".join(lines)
+            lines.append(f'- {name} ({amount} {unit})')
+        return '\n'.join(lines)
 
     @action(
         methods=('get',),
@@ -271,23 +253,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def create_object(request, serializer_class, pk):
-        if Recipes.objects.filter(pk=pk).exists():
-            data = {
-                'user': request.user.id,
-                'recipe': pk
-            }
-            serializer = serializer_class(
-                data=data,
-                context={'request': request}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
+        recipe = get_object_or_404(
+            Recipes,
+            pk=pk
+        )
+        data = {
+            'user': request.user.id,
+            'recipe': recipe.id
+        }
+        serializer = serializer_class(
+            data=data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(
-            status=status.HTTP_404_NOT_FOUND
+            serializer.data,
+            status=status.HTTP_201_CREATED
         )
 
     @staticmethod
@@ -295,11 +277,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         deleted, _ = model_class.objects.filter(
             user=request.user, recipe__id=pk
         ).delete()
-        if deleted:
-            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-            data={'error': 'Рецепта нет в списке покупок.'},
-            status=status.HTTP_404_NOT_FOUND
+            status=status.HTTP_204_NO_CONTENT
+            if deleted
+            else status.HTTP_404_NOT_FOUND
         )
 
     @action(

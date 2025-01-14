@@ -7,7 +7,8 @@ from .constaints import (
     TAG_LENGTH,
     MEASUREMENT_LENGTH,
     MIN_VALIDATE_INTEGER,
-    NAME_INGREDIENT
+    NAME_INGREDIENT,
+    LEN_NAME
 )
 from .services.link_service import LinkService
 from users.models import Users
@@ -41,7 +42,7 @@ class Ingredients(models.Model):
         )
 
     def __str__(self):
-        return self.name
+        return self.name[:LEN_NAME]
 
 
 class Tags(models.Model):
@@ -64,7 +65,7 @@ class Tags(models.Model):
         verbose_name_plural = 'Теги'
 
     def __str__(self):
-        return self.slug
+        return self.slug[:LEN_NAME]
 
 
 class Recipes(models.Model):
@@ -119,7 +120,7 @@ class Recipes(models.Model):
         verbose_name_plural = 'Рецепты'
 
     def __str__(self):
-        return self.name
+        return self.name[:LEN_NAME]
 
 
 class RecipesIngredients(models.Model):
@@ -156,7 +157,9 @@ class RecipesIngredients(models.Model):
         )
 
     def __str__(self):
-        return f'{self.recipe.name} - {self.ingredient.name}'
+        return (
+            f'{self.recipe.name[:LEN_NAME]}-{self.ingredient.name[:LEN_NAME]}'
+        )
 
 
 class BaseUserRecipeRelation(models.Model):
@@ -190,7 +193,7 @@ class BaseUserRecipeRelation(models.Model):
     def __str__(self):
         return (
             f'{self.user.username} - '
-            f'{self.recipe.name} '
+            f'{self.recipe.name[:LEN_NAME]} '
             f'({self._meta.verbose_name})'
         )
 

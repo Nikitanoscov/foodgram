@@ -18,24 +18,3 @@ class RecipeIngredientsInLineFormSet(forms.BaseInlineFormSet):
                 'Рецепт должен содержать хотя бы один ингредиент'
             )
         return super().clean()
-
-
-class RecipeTagsInLineFormSet(forms.BaseInlineFormSet):
-
-    def clean(self):
-        tags = []
-        for form in self.forms:
-            if form.is_valid():
-                clean_data = form.cleaned_data
-                print(clean_data)
-                if (
-                    clean_data.get('DELETE', '') is not True
-                    and clean_data.get('tags')
-                ):
-                    print(clean_data.get('tags'))
-                    tags.append(clean_data.get('tags'))
-        if not tags:
-            raise forms.ValidationError(
-                'Рецепт должен содержать хотя бы один тег.'
-            )
-        return super().clean()
