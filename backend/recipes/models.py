@@ -3,12 +3,12 @@ from django.db import models
 from django.utils import timezone
 
 from .constaints import (
-    RECIPE_NAME_LENGTH,
-    TAG_LENGTH,
+    LEN_NAME,
+    NAME_INGREDIENT,
     MEASUREMENT_LENGTH,
     MIN_VALIDATE_INTEGER,
-    NAME_INGREDIENT,
-    LEN_NAME
+    RECIPE_NAME_LENGTH,
+    TAG_LENGTH
 )
 from .services.link_service import LinkService
 from users.models import Users

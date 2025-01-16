@@ -1,5 +1,5 @@
-from django.core.serializers import serialize
 from django.core.management.base import BaseCommand
+from django.core.serializers import serialize
 
 from recipes.models import Ingredients
 
