@@ -78,7 +78,6 @@ class UserViewSet(djoser.views.UserViewSet):
     def delete_avatar(self, request):
         """Удаление автара."""
         request.user.avatar.delete()
-        request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -109,7 +108,7 @@ class UserViewSet(djoser.views.UserViewSet):
             subscriptions_to_author__subscriber=self.request.user
         ).annotate(
             recipes_count=Count('recipes')
-        ).order_by()
+        ).order_by('username')
         paginator = self.pagination_class()
         paginate_queryset = paginator.paginate_queryset(
             queryset, request
@@ -128,13 +127,17 @@ class UserViewSet(djoser.views.UserViewSet):
         url_path='subscribe'
     )
     def subscribe(self, request, id):
-        request.data['author'] = get_object_or_404(
+        author = get_object_or_404(
             Users,
             id=id
         ).id
-        request.data['subscriber'] = request.user.id
+        subscriber = request.user.id
+        data = {
+            'author': author,
+            'subscriber': subscriber
+        }
         serializer = SubscriberWriteSerializer(
-            data=request.data,
+            data=data,
             context={'request': self.request}
         )
         serializer.is_valid(raise_exception=True)
@@ -143,7 +146,7 @@ class UserViewSet(djoser.views.UserViewSet):
 
     @subscribe.mapping.delete
     def delete_subscribe(self, request, id):
-        """Удаление подписки"""
+        """Удаление подписки."""
         author = get_object_or_404(
             Users,
             pk=id

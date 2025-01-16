@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'users.apps.UsersConfig',
     'rest_framework',
+    'corsheaders',
     'rest_framework.authtoken',
     'django_filters',
     'djoser',
@@ -39,12 +40,19 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+]
+
+CORS_URLS_REGEX = r'^/.*$'
 
 
 ROOT_URLCONF = 'backend.urls'
@@ -81,8 +89,8 @@ else:
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
             'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'foodgram_pasword'),
-            'HOST': os.getenv('HOST', 'foodgram_db'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'foodgram_password'),
+            'HOST': os.getenv('HOST', 'db'),
             'PORT': os.getenv('PORT', '5432')
         }
     }

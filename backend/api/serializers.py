@@ -66,12 +66,11 @@ class TagsSerializer(serializers.ModelSerializer):
 
 class IngredientForWriteRecipeSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для записи ингредиентов
-    для интеграции в другие сериализатры.
+    Сериализатор для записи ингредиентов.
+    Для интеграции в другие сериализатры.
     """
 
     id = serializers.PrimaryKeyRelatedField(
-        source='ingredient',
         queryset=Ingredients.objects.all()
     )
     amount = serializers.IntegerField(
@@ -79,7 +78,7 @@ class IngredientForWriteRecipeSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = RecipesIngredients
+        model = Ingredients
         fields = (
             'id',
             'amount'
@@ -88,11 +87,12 @@ class IngredientForWriteRecipeSerializer(serializers.ModelSerializer):
 
 class IngredientForReadRecipeSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для чтения ингредиентов
-    для интеграции в другие сериализаторы.
+    Сериализатор для чтения ингредиентов.
+    Для интеграции в другие сериализаторы.
     """
     id = serializers.IntegerField(
-        read_only=True
+        read_only=True,
+        source='ingredient.id'
     )
     name = serializers.CharField(
         source='ingredient.name',
@@ -136,12 +136,8 @@ class RecipesReadSerializer(serializers.ModelSerializer):
         many=True
     )
     author = UserSerializer()
-    is_in_shopping_cart = serializers.SerializerMethodField(
-        method_name='get_is_in_shopping_cart'
-    )
-    is_favorited = serializers.SerializerMethodField(
-        method_name='get_is_favorited'
-    )
+    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipes
@@ -214,18 +210,20 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
             'author': {'required': False}
         }
 
+    def validate_image(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                'Изображение обЪязательное.'
+            )
+        return value
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
         ingredients = attrs.get('ingredients', '')
         tags = attrs.get('tags', '')
-        image = attrs.get('image', '')
         unique_ingredients = set(
-            ingredient['ingredient'] for ingredient in ingredients
+            ingredient['id'] for ingredient in ingredients
         )
-        if not image:
-            raise serializers.ValidationError(
-                'Изображение обЪязательное.'
-            )
         if not tags:
             raise serializers.ValidationError(
                 'tags: tags is required.'
@@ -249,7 +247,7 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
         RecipesIngredients.objects.bulk_create(
             RecipesIngredients(
                 recipe=recipe,
-                ingredient=ingredient['ingredient'],
+                ingredient=ingredient['id'],
                 amount=ingredient['amount']
             ) for ingredient in ingredients
         )
@@ -263,11 +261,12 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
         recipe.tags.set(tags)
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         instance.tags.set(tags)
-        instance.ingredients_for_recipe.all().delete()
+        instance.ingredients.clear()
         self._ingredients_create(instance, ingredients)
         return super().update(instance, validated_data)
 

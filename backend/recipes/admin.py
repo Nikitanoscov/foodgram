@@ -3,7 +3,6 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-
 from .forms import RecipeIngredientsInLineFormSet
 from .models import (
     Favourites,
@@ -86,7 +85,7 @@ class RecipeAdmin(admin.ModelAdmin):
         link = reverse('admin:users_users_change', args=[obj.author.id])
         return format_html('<a href="{}">{}</a>', link, obj.author.username)
 
-    @admin.display(description='Количество добавлении в избранное')
+    @admin.display(description='В избранном')
     def get_count_favorites(self, obj):
         return obj.favourites_set.all().count()
 
