@@ -1,4 +1,4 @@
-from django.db.models import Exists, OuterRef, Q, Case, When, IntegerField
+from django.db.models import Case, Exists, IntegerField, OuterRef, Q, When
 from django_filters import rest_framework as filters
 
 from recipes.models import Favourites, Ingredients, Recipes, ShoppingCard, Tags
