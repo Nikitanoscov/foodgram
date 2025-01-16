@@ -1,8 +1,8 @@
 from django.db import transaction
 from django.db.models import Count
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
 from djoser.serializers import UserSerializer as DjoserUserSerializer
+from rest_framework import serializers
 
 from .constaints import MIN_INTEGER_VALUE
 from recipes.models import (
@@ -13,7 +13,7 @@ from recipes.models import (
     ShoppingCard,
     Tags
 )
-from users.models import Users, Subscribers
+from users.models import Subscribers, Users
 
 
 class UserSerializer(DjoserUserSerializer):

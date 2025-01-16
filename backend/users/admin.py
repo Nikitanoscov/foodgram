@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from django.utils.safestring import mark_safe
 
-from .models import Users, Subscribers
+from .models import Subscribers, Users
 
 
 @admin.register(Users)

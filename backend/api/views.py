@@ -10,13 +10,13 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     AllowAny,
-    IsAuthenticatedOrReadOnly,
-    IsAuthenticated
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
 )
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
-from api.filters import RecipeFilter, IngredientFilter
+from api.filters import IngredientFilter, RecipeFilter
 from api.paginations import RecipesPageNumberPagination
 from api.permissions import OnlyAuthorOrReadOnly
 from api.serializers import (
@@ -24,9 +24,9 @@ from api.serializers import (
     FavoriteSerializer,
     IngredientGetSerializer,
     RecipesWriteSerializer,
+    ShoppingCardSerializer,
     SubscriberReadSerializer,
     SubscriberWriteSerializer,
-    ShoppingCardSerializer,
     TagsSerializer,
     UserSerializer
 )
@@ -34,9 +34,9 @@ from recipes.models import (
     Favourites,
     Ingredients,
     Recipes,
+    RecipesIngredients,
     ShoppingCard,
-    Tags,
-    RecipesIngredients
+    Tags
 )
 from users.models import Users
 
