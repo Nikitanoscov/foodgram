@@ -52,6 +52,14 @@ jobs:
   build_and_push_to_docker_hub:
     runs-on: ubuntu-latest
     needs: tests
+    env: 
+      SECRET_KEY: ${{ vars.SECRET_KEY }}
+      HOSTS_PROJECT: ${{ vars.HOSTS_PROJECT }}
+      POSTGRES_DB: ${{ vars.POSTGRES_DB }}
+      POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
+      DEBUG: ${{ vars.DEBUG }}
+      USE_POSTGRES: ${{ vars.USE_POSTGRES }}
     steps:
 
       - name: Check out the repo
@@ -79,7 +87,13 @@ jobs:
           context: ./backend/
 
           push: true
-
+          build-args: |
+            SECRET_KEY=${{ env.SECRET_KEY }}
+            POSTGRES_DB=${{ env.POSTGRES_DB }}
+            POSTGRES_USER=${{ env.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ env.POSTGRES_PASSWORD }}
+            DEBUG=${{ env.DEBUG }}
+            USE_POSTGRES=${{ env.USE_POSTGRES }}
           tags: ${{ secrets.DOCKER_USER }}/foodgram_backend:latest
 
   build_frontend_and_push_to_docker_hub:
