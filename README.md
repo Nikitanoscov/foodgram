@@ -1,3 +1,5 @@
+[![Main Kittygram Workflow](https://github.com/Nikitanoscov/kittygram_final/actions/workflows/main.yml/badge.svg?event=push)](https://github.com/Nikitanoscov/kittygram_final/actions/workflows/main.yml)
+
 # FoodGram -  http://eatopia.zapto.org/
 
 **Умеете вкусно готовить, поделитесь своим рецептом с другими. Не знаете, что приготовить посмотрите рецепты для любой ситуации.**
