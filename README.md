@@ -1,4 +1,4 @@
-[![Main Kittygram Workflow](https://github.com/Nikitanoscov/kittygram_final/actions/workflows/main.yml/badge.svg?event=push)](https://github.com/Nikitanoscov/kittygram_final/actions/workflows/main.yml)
+[![Main Foodgram Workflow](https://github.com/Nikitanoscov/foodgram/actions/workflows/main.yml/badge.svg?event=push)](https://github.com/Nikitanoscov/foodgram/actions/workflows/main.yml)
 
 # FoodGram -  http://eatopia.zapto.org/
 
