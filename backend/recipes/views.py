@@ -7,7 +7,5 @@ from .models import Recipes
 
 def recipe_redirect(request, link):
     recipe = get_object_or_404(Recipes, short_link=link)
-    recipe_url = reverse('recipe-detail', kwargs={'pk': recipe.id})
-    print(recipe_url)
-    print(recipe_url[4:])
-    return HttpResponsePermanentRedirect(recipe_url[4:])
+    recipe_url = f'recipes/{recipe.id}/'
+    return HttpResponsePermanentRedirect(recipe_url)
